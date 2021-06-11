@@ -1,0 +1,544 @@
+---
+title: "Trabalho FGV - Introdução ao R em Ciência de Dados"
+author: "Julia Miranda, Leonardo Lourenço Gomes & Maria Miorim"
+date: "20/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<center>
+
+![](https://i0.wp.com/blogdoberta.com/wp-content/uploads/2020/04/fgv_capa2.png){ width=15% }
+
+</center>
+
+
+## 1) Escolhendo bibliotecas
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(lattice)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(sf)
+library(geobr)
+library(RColorBrewer)
+library(maps)
+library(treemap)
+library(purrr)
+library(googleVis)
+library(plotly)
+library(d3Tree)
+```
+<center>
+## 2) Base de Dados
+</center>
+### 2.1) Leitura e Limpeza das Bases de Dados
+  
+#### 2.1.1) Bases de dados a respeito de evasão e reprovação:
+  
+##### Abrindo as Bases de dados a respeito de evasão e reprovação:
+  
+```{r message=FALSE, warning=FALSE}
+setwd("C:/Pasta Trabalho R/Educacao")
+nomes<-list.files("C:/Pasta Trabalho R/Educacao")
+arquivos <- sapply(nomes, read_excel,simplify = F)
+tx_rend_2012<-arquivos[[1]]
+tx_rend_2013<-arquivos[[2]]
+tx_rend_2014<-arquivos[[3]]
+tx_rend_2015<-arquivos[[4]]
+tx_rend_2016<-arquivos[[5]]
+tx_rend_2017<-arquivos[[6]]
+tx_rend_2018<-arquivos[[7]]
+tx_rend_2019<-arquivos[[8]]
+```
+  
+##### Uniformizando o nome das colunas e os dados fornecidos:
+  
+```{r}
+tx_rend_2012<-tx_rend_2012[,c('Ano','UF','Localização','Rede',"Taxa de Reprovação - Ensino Médio","Taxa de Abandono - Ensino Médio")]
+tx_rend_2013<-tx_rend_2013[,c('Ano','UF','Localização','Rede',"Taxa de Reprovação - Ensino Médio","Taxa de Abandono - Ensino Médio")]
+tx_rend_2014<-tx_rend_2014[,c('Ano','UF','Localização','Rede',"Taxa de Reprovação - Ensino Médio","Taxa de Abandono - Ensino Médio")]
+tx_rend_2015<-tx_rend_2015[,c('Ano','UF','Localização','Rede',"Taxa de Reprovação - Ensino Médio","Taxa de Abandono - Ensino Médio")]
+tx_rend_2016<-tx_rend_2016[,c('Ano','UF','Localização',"Dependência Administrativa","...36","...54")]
+tx_rend_2017<-tx_rend_2017[,c('Ano',"Unidade Geográfica",'Localização',"Dependência Administrativa","...36","...54")]
+tx_rend_2018<-tx_rend_2018[,c('Ano',"Unidade Geográfica",'Localização',"Dependência Administrativa","...36","...54")]
+tx_rend_2019<-tx_rend_2019[,c('Ano',"Unidade Geográfica",'Localização',"Dependência Administrativa","...36","...54")]
+
+
+tx_rend_2016<- rename(tx_rend_2016,'Rede'="Dependência Administrativa","Taxa de Reprovação - Ensino Médio"="...36","Taxa de Abandono - Ensino Médio"="...54")
+tx_rend_2017<- rename(tx_rend_2017,'UF'="Unidade Geográfica",'Rede'="Dependência Administrativa","Taxa de Reprovação - Ensino Médio"="...36","Taxa de Abandono - Ensino Médio"="...54")
+tx_rend_2018<- rename(tx_rend_2018,'UF'="Unidade Geográfica",'Rede'="Dependência Administrativa","Taxa de Reprovação - Ensino Médio"="...36","Taxa de Abandono - Ensino Médio"="...54")
+tx_rend_2019<- rename(tx_rend_2019,'UF'="Unidade Geográfica",'Rede'="Dependência Administrativa","Taxa de Reprovação - Ensino Médio"="...36","Taxa de Abandono - Ensino Médio"="...54")
+
+###Uniformizando os dados fornecidos pelas tabelas
+tx_rend_2017<-subset(tx_rend_2017,(tx_rend_2017$UF!='Brasil')&(tx_rend_2017$UF!='Norte')&(tx_rend_2017$UF!='Nordeste')&(tx_rend_2017$UF!='Centro-Oeste')&(tx_rend_2017$UF!='Sudeste')&(tx_rend_2017$UF!='Sul'))
+tx_rend_2018<-subset(tx_rend_2018,(tx_rend_2018$UF!='Brasil')&(tx_rend_2018$UF!='Norte')&(tx_rend_2018$UF!='Nordeste')&(tx_rend_2018$UF!='Centro-Oeste')&(tx_rend_2018$UF!='Sudeste')&(tx_rend_2018$UF!='Sul'))
+tx_rend_2019<-subset(tx_rend_2019,(tx_rend_2019$UF!='Brasil')&(tx_rend_2019$UF!='Norte')&(tx_rend_2019$UF!='Nordeste')&(tx_rend_2019$UF!='Centro-Oeste')&(tx_rend_2019$UF!='Sudeste')&(tx_rend_2019$UF!='Sul'))
+```
+  
+##### Removendo os dados "NA"
+  
+```{r}
+tx_rend_2012<-na.omit(tx_rend_2012)
+tx_rend_2013<-na.omit(tx_rend_2013)
+tx_rend_2014<-na.omit(tx_rend_2014)
+tx_rend_2015<-na.omit(tx_rend_2015)
+tx_rend_2016<-na.omit(tx_rend_2016)
+tx_rend_2017<-na.omit(tx_rend_2017)
+tx_rend_2018<-na.omit(tx_rend_2018)
+tx_rend_2019<-na.omit(tx_rend_2019)
+```
+  
+
+##### Limpando as tabelas entre 2015 e 2019
+  
+```{r}
+limpeza=function(tabela){
+  tabela<-na.omit(tabela)#Removendo NA
+  tabela<-subset(tabela,(tabela$Rede=='Pública'&tabela$Localização=='Total'))#Filtrando ensino público total
+  tabela$Rede<-NULL #Tirando coluna Rede
+  tabela$Localização<-NULL#Tirando coluna LocalizaÃ§Ã£o
+  tabela$`Taxa de Reprovação - Ensino Médio`<-as.numeric(tabela$`Taxa de Reprovação - Ensino Médio`)#Transformando dados em valores nÃºmericos
+  tabela$`Taxa de Abandono - Ensino Médio`<-as.numeric(tabela$`Taxa de Abandono - Ensino Médio`)#Transformando dados em valores nÃºmericos
+  return(tabela)
+  }
+tx_rend_2015<-limpeza(tx_rend_2015)
+tx_rend_2016<-limpeza(tx_rend_2016)
+tx_rend_2017<-limpeza(tx_rend_2017)
+tx_rend_2018<-limpeza(tx_rend_2018)
+tx_rend_2019<-limpeza(tx_rend_2019)
+
+
+```
+  
+##### Limpando as tabelas entre 2012 e 2014
+  
+```{r}
+limpeza=function(tabela){
+  tabela<-na.omit(tabela)#Removendo NA
+  tabela<-subset(tabela,(tabela$Rede=='Publico'&tabela$Localização=='Total'))#Filtrando ensino pÃºblico total
+  tabela$Rede<-NULL #Tirando coluna Rede
+  tabela$Localização<-NULL#Tirando coluna LocalizaÃ§Ã£o
+  tabela$UF<-tx_rend_2015$UF#Uniformizando nomenclatura dos estados
+  tabela$`Taxa de Reprovação - Ensino Médio`<-as.numeric(tabela$`Taxa de Reprovação - Ensino Médio`)#Transformando dados em valores nÃºmericos
+  tabela$`Taxa de Abandono - Ensino Médio`<-as.numeric(tabela$`Taxa de Abandono - Ensino Médio`)#Transformando dados em valores nÃºmericos
+  return(tabela)
+}
+tx_rend_2012<-limpeza(tx_rend_2012)
+tx_rend_2013<-limpeza(tx_rend_2013)
+tx_rend_2014<-limpeza(tx_rend_2014)
+
+```
+  
+#### 2.1.2) Abrindo dados sobre desemprego
+
+```{r message=FALSE, warning=FALSE}
+setwd("C:/Pasta Trabalho R/Desemprego_Trimestral")
+estados<-list.files("C:/Pasta Trabalho R/Desemprego_Trimestral")
+arquivos <- sapply(estados, read_excel,simplify = F)
+
+limpeza=function(tabela){
+  tabela<-rename(tabela,'Grupo de Idade'="Taxa de desocupação, por idade",'Estados'='...2')
+  tabela[,c('...3','...36','...37','...38','...39','...40')]<-NULL
+  tabela<-tabela[3:6,]
+  cols <- sapply(tabela, function(x) any(grepl(",", x)))
+  tabela[cols] <- lapply(tabela[cols], function(x) as.numeric(sub(",", ".", x)))
+  lista_vazia_para_facilitar_preenchimento<-list(1:4)
+  tabela$'2012'<-lista_vazia_para_facilitar_preenchimento
+  tabela2<-select(tabela,'Grupo de Idade','Estados')
+  tabela2$'2012'= rowMeans(tabela[,c(3:6)])
+  tabela2$'2013'  = rowMeans(tabela[,c(7:10)])
+  tabela2$'2014' = rowMeans(tabela[,c(11:14)])
+  tabela2$'2015' = rowMeans(tabela[,c(15:18)])
+  tabela2$'2016' = rowMeans(tabela[,c(19:22)])
+  tabela2$'2017' = rowMeans(tabela[,c(23:26)])
+  tabela2$'2018'  = rowMeans(tabela[,c(27:30)])
+  tabela2$'2019' = rowMeans(tabela[,c(31:34)])
+  return(tabela2)}
+i=2
+desemprego<-limpeza(arquivos[[1]])
+while(i<=length(arquivos)){
+  desemprego<-rbind(desemprego,limpeza(arquivos[[i]]))
+  i=i+1
+  }
+```
+<center>
+### 2.2) Criando colunas da tabela de regressão
+</center>
+##### Reprovação
+```{r}
+reprovacao<-tx_rend_2012[,'UF']
+reprovacao<-rename(reprovacao,'Estados'='UF')
+reprovacao$'2012'<-tx_rend_2012$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2013'<-tx_rend_2013$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2014'<-tx_rend_2014$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2015'<-tx_rend_2015$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2016'<-tx_rend_2016$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2017'<-tx_rend_2017$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2018'<-tx_rend_2018$`Taxa de Reprovação - Ensino Médio`
+reprovacao$'2019'<-tx_rend_2019$`Taxa de Reprovação - Ensino Médio`
+col_rep <- reprovacao %>%
+  pivot_longer(-Estados, names_to = 'Ano', values_to = 'Reprovacao')
+```
+  
+##### Evasão
+  
+```{r}
+evasao<-tx_rend_2012[,'UF']
+evasao<-rename(evasao,'Estados'='UF')
+evasao$'2012'<-tx_rend_2012$`Taxa de Abandono - Ensino Médio`
+evasao$'2013'<-tx_rend_2013$`Taxa de Abandono - Ensino Médio`
+evasao$'2014'<-tx_rend_2014$`Taxa de Abandono - Ensino Médio`
+evasao$'2015'<-tx_rend_2015$`Taxa de Abandono - Ensino Médio`
+evasao$'2016'<-tx_rend_2016$`Taxa de Abandono - Ensino Médio`
+evasao$'2017'<-tx_rend_2017$`Taxa de Abandono - Ensino Médio`
+evasao$'2018'<-tx_rend_2018$`Taxa de Abandono - Ensino Médio`
+evasao$'2019'<-tx_rend_2019$`Taxa de Abandono - Ensino Médio`
+col_eva <- evasao %>%
+  pivot_longer(-Estados, names_to = 'Ano', values_to = 'Evasao') %>%
+  mutate(Ano = substr(Ano, 1, 4))
+```
+  
+##### Desemprego
+  
+```{r}
+cols_des <- desemprego %>%
+  pivot_longer(-c('Grupo de Idade', 'Estados'), names_to = 'Ano', values_to = 'valor') %>%
+  pivot_wider(names_from = 'Grupo de Idade', values_from = 'valor')
+cols_des$`18 a 24 anos`<-NULL
+```
+<center>
+## 3) Regressão
+</center>
+
+### 3.1) Criação do Data Frame da Regressão BR:
+
+```{r}
+regr <- inner_join(col_rep, col_eva, by=c('Estados', 'Ano')) %>%
+  inner_join(cols_des, by = c('Estados', 'Ano')) %>%
+  rename(Desemprego.Adolescentes = `14 a 17 anos`,
+         Desemprego.25_39.anos = `25 a 39 anos`,
+         Desemprego.40_59.anos = `40 a 59 anos`)
+```
+  
+### 3.2) Regressão Evasão BR
+
+##### A partir dessa regressão verifica-se que a cada 1% de Evasão que ocorre a nível Brasil, a taxa de desemprego para adolescentes diminui em 0,2%. Esse fato pode ser justificado por diversos motivos, sendo um deles a falta de apoio aos jovens para manter uma frequência regular na escola juntamente ao seu trabalho. Já o desemprego entre 25 e 39 anos, cresce em 1,4% e entre 40 e 59 anos reduz a 1,6%. Além disso, observa-se que o  R ao quadrado mesmo ajustado é baixo, podendo ser justificado pelo tamanho da amostra analisada (nacional - por estado). Desse modo, análises gráficas foram realizadas para explorar mais essa ideia.
+  
+```{r}
+regressao.ev<- lm(Evasao ~ Desemprego.25_39.anos+Desemprego.40_59.anos+Desemprego.Adolescentes+Reprovacao, data = regr)
+regressao.ev
+summary(regressao.ev)
+
+```
+
+### 3.3) Regressão Reprovacao BR
+
+##### Nessa regressão, observa-se que a cada 1% de reprovação, a taxa de desemprego para adolescentes cresce em 0,2%. Esse fato pode ser justificado pelo requisitos feitos pelo pelo programa jovem aprendiz, por exemplo, de manter uma média adequada na escola, fazendo com que a reprovação resultasse em a perda do emprego. Já a taxa de desemprego entre 25 e 39 anos diminui em 1,6% e de 40 a 59 anos aumenta em 1,9%. Ademais, assim como na regressão da evasão BR, o R ao quadrado mesmo ajustado é baixo, podendo ser explicado pelos mesmos motivos.
+
+```{r}
+regressao.rp<- lm(Reprovacao ~ Desemprego.25_39.anos+Desemprego.40_59.anos+Desemprego.Adolescentes+Evasao, data = regr)
+regressao.rp
+summary(regressao.rp)
+```
+
+  
+### 3.4) Criação do Data Frame da Regressão RJ
+```{r}
+regr_rj<-regr[(regr$Estados=='Rio de Janeiro'),]
+regr_rj$Estados<-NULL
+
+```
+  
+### 3.5) Regressão Evasão RJ
+
+##### A partir dessa regressão, agora direcionada ao estado do Rio de Janeiro a fim de uma análise mais regional, percebe-se que a cada 1% de evasão, a taxa de desemprego adolescente aumenta 0,1%, contrariando o contexto do Brasil. Isso pode ser justificado até mesmo pelo aumento da geração nem-nem no Rio de Janeiro. Já a taxa entre 25 e 39 anos diminuiu em 0,7% e de 40 a 59 anos aumentou em 0,7%.
+  
+```{r}
+regressao.ev.RJ<- lm(Evasao ~ Desemprego.25_39.anos+Desemprego.40_59.anos+Desemprego.Adolescentes+Reprovacao, data = regr_rj)
+regressao.ev.RJ
+summary(regressao.ev.RJ)
+```
+
+### 3.6) Regressão Reprovação RJ
+
+##### Nessa regressão, nota-se que a cada 1% de reprovação, a taxa de desemprego adolescente aumenta em 0,03%, seguindo o contexto do Brasil. Assim como a taxa de 25 a 39 anos que diminui em 0,3% e a de 40 a 59 anos que aumenta em 1,5%. Além disso, um dado interessante é o fato do R ao quadrado ajustado em 0,8; mostrando que para uma amostra regional o poder estatístico é melhor aproveitado.
+```{r}
+regressao.rp.RJ<- lm(Reprovacao ~ Desemprego.25_39.anos+Desemprego.40_59.anos+Desemprego.Adolescentes+Evasao, data = regr_rj)
+regressao.rp.RJ
+summary(regressao.rp.RJ)
+```
+<center>
+## 4) Gráficos
+</center>
+
+### 4.1) Scatter Plot
+
+Adolescentes:
+
+#####  Desse gráfico, a melhor conclusão que se pode tirar é baseada na relação entre o desemprego adolescente e a evasão. Dado que no maior grau de evasão, o desemprego adolescente se concentra em graus baixos, sendo uma relação negativa. Assim, comprova-se a análise da regressão.
+
+```{r}
+adol.ev.rp<-subset(regr,select=c(Desemprego.Adolescentes,Evasao,Reprovacao))
+plot(adol.ev.rp,col="darkseagreen")
+```
+
+Desemprego:
+
+##### A partir desse gráfico, pode-se concluir que o desemprego não depende de faixas etárias específicas nos estados brasileiros. Dada a relação quase sempre positiva, percebe-se que o mercado de trabalho e atingido no total.
+```{r}
+adol.ja.ad<-subset(regr,select=c(Desemprego.Adolescentes,Desemprego.25_39.anos,Desemprego.40_59.anos))
+plot(adol.ja.ad,col="darkgoldenrod1")
+
+```
+
+Mercado de Trabalho Adultos x Evasao:
+
+##### A principal motivação desse gráfico foi encontrar uma relação positiva entre o desemprego dos possíveis responsáveis dos adolescentes em análise (40 a 59 anos) e a evasão escolar. No entanto, os gráficos se apresentaram bem dispersos, dificultando uma conclusão.
+
+```{r}
+ev.ja.ad<-subset(regr,select=c(Evasao,Desemprego.25_39.anos,Desemprego.40_59.anos))
+plot(ev.ja.ad,col="steelblue3")
+```
+  
+### 4.2) Gráficos Temporais RJ
+  
+##### Desemprego:
+
+##### Nesse gráfico percebe-se que no Rio de Janeiro a taxa de desemprego dos adolescentes crescem em maior escala do que para os outros dois grupos em análise. Esse fato pode ser explicado pela falta de incentivo que as empresas possuem em contribuir com programas, tais como o jovem aprendiz. Além disso, a ideia de que o mercado de trabalho é mútuo e independe de uma faixa etária específica é reforçada, pois é vista uma tendência na queda e no crescimento para os três grupos em análise.
+```{r}
+pl.line.rj1<-subset(regr_rj,select=c(Ano,Desemprego.40_59.anos,Desemprego.25_39.anos,Desemprego.Adolescentes))
+Line<-gvisLineChart(pl.line.rj1)
+plot(Line)
+```
+
+  
+##### Adolescentes
+  
+##### Nesse gráfico percebe-se a independência entre as três variáveis analisadas. Dado que a partir do momento que a taxa de desemprego está alta, poderia ser deduzido que os adolescentes recorreriam as escolas,no entanto, como visto no gráfico, isso não ocorre. Esse fato pode ser explicado pela dificuldade de acesso as escolas, ao ensino precário e até mesmo ao aumento da geração nem-nem[^1] no Rio de Janeiro.
+```{r}
+pl.line.rj2<-subset(regr_rj,select=c(Ano,Evasao,Reprovacao,Desemprego.Adolescentes))
+Line2<-gvisLineChart(pl.line.rj2)
+plot(Line2)
+```
+
+  
+[^1]: A qualificação da palavra "nem-nem" se refere a taxa da população jovem que nem estudo e nem trabalha.
+  
+
+## 5) Mapas
+  
+### 5.1) Criação das tabelas GeoBr
+  
+#### 5.1.1) Chamando o Dataframe dos Estados
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+Brasil_Estados <-read_state(code_state="all",year=2019)%>%
+  rename(Estados=name_state)
+```
+  
+#### 5.1.2) Criação Data Frame Evasão
+```{r}
+
+evasao$Estados[evasao$Estados=="Amazonas"]<- "Amazônas"
+evasao$Estados[evasao$Estados=="Rio Grande do Sul"]<- "Rio Grande Do Sul"
+evasao$Estados[evasao$Estados=="Rio Grande do Norte"]<- "Rio Grande Do Norte"
+evasao$Estados[evasao$Estados=="Rio de Janeiro"]<- "Rio De Janeiro"
+evasao$Estados[evasao$Estados=="Mato Grosso do Sul"]<- "Mato Grosso Do Sul"
+
+eva_geo_br <- dplyr::left_join(Brasil_Estados, evasao, by = c("Estados" = "Estados"))
+
+```
+#### 5.1.3) Criação Data Frame Reprovação
+
+```{r}
+reprovacao$Estados[reprovacao$Estados=="Amazonas"]<- "Amazônas"
+reprovacao$Estados[reprovacao$Estados=="Rio Grande do Sul"]<- "Rio Grande Do Sul"
+reprovacao$Estados[reprovacao$Estados=="Rio Grande do Norte"]<- "Rio Grande Do Norte"
+reprovacao$Estados[reprovacao$Estados=="Rio de Janeiro"]<- "Rio De Janeiro"
+reprovacao$Estados[reprovacao$Estados=="Mato Grosso do Sul"]<- "Mato Grosso Do Sul"
+
+rep_geo_br<- dplyr::left_join(Brasil_Estados, reprovacao, by = c("Estados" = "Estados"))
+
+```
+##### 5.1.4) Criação Data Frame Desemprego
+```{r}
+
+desemprego$Estados[evasao$Estados=="Amazonas"]<- "Amazônas"
+desemprego$Estados[evasao$Estados=="Rio Grande do Sul"]<- "Rio Grande Do Sul"
+desemprego$Estados[evasao$Estados=="Rio Grande do Norte"]<- "Rio Grande Do Norte"
+desemprego$Estados[evasao$Estados=="Rio de Janeiro"]<- "Rio De Janeiro"
+desemprego$Estados[evasao$Estados=="Mato Grosso do Sul"]<- "Mato Grosso Do Sul"
+
+desemprego_geo_br<-full_join(desemprego,Brasil_Estados,by="Estados")
+
+```
+  
+  
+### 5.2) Criando os Mapas.
+  
+#### 5.2.1) Mapa Evasão
+  
+##### Criando no axis argument
+  
+```{r}
+  no_axis <- theme(axis.title=element_blank(),
+                   axis.text=element_blank(),
+                   axis.ticks=element_blank())
+```
+  
+##### Criando o Intervalo da paleta de Cores para os mapas de reprovação
+```{r}
+pal_eva <- RColorBrewer::brewer.pal(3,'YlOrRd')[c(1,3)]
+```
+  
+##### Criando os mapas de evasão
+
+##### Ao observar a taxa de evasão no contexto nacional, nota-se que 2012 foi o ano em que ocorreu as maiores taxas de evasão dentre os períodos analisados, chegando a possuir um nível máximo de 20. Entretanto, esses níveis foram decaindo ao longo do tempo, chegando a 12,5. Já no contexto regional, destaca-se que no ano de 2019 (o mais atual da análise), o norte permanece com a maior incidência de evasão, acompanhado do nordeste que mantém seus níveis de evasão de alto a médio, com exceção para Pernambuco que sempre possuiu níveis baixos de evasão comparado ao território nacional.
+```{r}
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2012`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2012",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal() 
+
+```
+  
+```{r echo=FALSE}
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2013`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2013",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2014`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2014",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2015`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2015",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2016`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2016",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2017`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2017",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2018`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2018",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+ggplot() +geom_sf(data=eva_geo_br, aes(fill=`2019`), color= NA,size=.15)+labs(title="Evasão no Brasil no ano de 2019",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_eva[1],high=pal_eva[2],name="Nivel da Taxa de Evasão")+theme_minimal()
+
+```
+
+#### 5.2.2) Mapa Reprovação
+  
+##### Criando o Intervalo da paleta de Cores para os mapas de reprovação
+```{r}
+pal_rep <- RColorBrewer::brewer.pal(3,'BuPu')[c(1,3)]
+```
+  
+##### Criando Mapas de Reprovação
+  
+##### A partir desses gráficos, percebe-se que diferentemente da evasão, os níveis de reprovação se mantiveram mais constantes ao longo dos anos. Ademais, nenhuma região possui destaque em altos níveis de reprovação, sendo os estados com maior incidência nos níveis de reprovação  de diferentes regiões (Bahia, Mato Grosso, Rio Grande do Sul). Em contrapartida aos altos índices de evasão na análise anterior, nota-se que a região norte possui uma das menores taxas de reprovação ao longo dos anos no contexto nacional, podendo ser justificado exatamente pelos altos níveis de evasão da região.
+```{r}
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2012`), color= NA,size=.15)+labs(title="Reprovação No Brasil no ano de 2012",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ',                                 size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+```
+```{r echo=FALSE}
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2013`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2013",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2014`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2014",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2015`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2015",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2016`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2016",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2017`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2017",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2018`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2018",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+ggplot() +geom_sf(data=rep_geo_br, aes(fill=`2019`), color= NA,size=.15)+labs(title="Reprovação no Brasil no ano de 2019",caption='Fonte: Inep - Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira ', size=8)+scale_fill_gradient(low=pal_rep[1],high=pal_rep[2],name="Nivel da Taxa de Reprovação")+theme_minimal()
+
+```
+
+
+
+## 6) Referências
+
+#### 6.1) Cran Packages  ![](https://cran.r-project.org/CRANlogo.png){ width=10% }
+  
+##### 6.1.1) [Rmarkdown: Dynamic DOcuments for R package](https://cran.r-project.org/web/packages/rmarkdown/index.html)- Data de visualização: 18/05/2021
+  
+##### 6.1.2) [GoogleVis Package ](https://cran.r-project.org/web/packages/googleVis/vignettes/googleVis_examples.html) - Data de visualização: 15/05/2021
+
+##### 6.1.3) [Readxl Package](https://cran.r-project.org/web/packages/readxl/index.html) - Data de visualização: 09/05/2021
+  
+##### 6.1.4) [Geobr - Introduction](https://cran.r-project.org/web/packages/geobr/vignettes/intro_to_geobr.html) - Data de visualização: 19/05/2021
+  
+##### 6.1.5) [Geobr Package](https://cran.r-project.org/web/packages/geobr/index.html) - Data de visualização: 19/05/2021
+  
+##### 6.1.6) [lattice Package](https://cran.r-project.org/web/packages/lattice/index.html) - Data de visualização: 15/05/2021
+  
+##### 6.1.7) [sf Package](https://cran.r-project.org/web/packages/sf/index.html) - Data de visualização: 19/05/2021
+  
+##### 6.1.8) [ggplot2 Package](https://cran.r-project.org/web/packages/ggplot2/index.html) - Data de visualização: 15/05/2021
+  
+##### 6.1.9) [Tidyverse Package](https://cran.r-project.org/web/packages/tidyverse/index.html) - Data de visualização: 10/05/2021
+  
+##### 6.1.10) [dplyr Package](https://cran.r-project.org/web/packages/dplyr/index.html) - Data de visualização: 12/05/2021
+  
+##### 6.1.11) [Treemap Package](https://cran.r-project.org/web/packages/treemap/index.html) - Data de visualização: 21/05/2021
+  
+#### 6.2) Dataframes Sites:
+
+##### 6.2.1) [PNAD - IBGE - Data Frame de Desemprego](https://www.ibge.gov.br/estatisticas/sociais/trabalho/9173-pesquisa-nacional-por-amostra-de-domicilios-continua-trimestral.html?=&t=series-historicas&utm_source=landing&utm_medium=explica&utm_campaign=desemprego)- Data de visualização: 25/04/2021
+![](https://www.agenciaconexoes.org/wp-content/uploads/2019/07/ibge.jpg){ width=10% }
+
+##### 6.2.2)[Data Frame evasão e Reprovação](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/censo-escolar)- Data de visualização: 25/04/2021
+
+![](https://pbs.twimg.com/profile_images/1298359357692940288/jhdqT6Mo_400x400.jpg){ width=10% }
+  
+#### 6.3) Video-Aulas de introdução a R Aplicado em Ciência de Dados disponiveis no eclass-FGV
+
+#### 6.4) Artigos de leitura:
+
+##### 6.4.1)[Artigos sobre educação Marcelo Neri](https://cps.fgv.br/en/graduacao?subtema=14&titulo=&tipo=All)
+
+## 7) Glossário
+
+### 7.1)
+##### <code>nomes</code> <-Lista de nomes das tabelas dentro da pasta "Educação"
+##### <code>arquivos</code> <- Lista de tabelas dentro da pasta "Educação"
+##### <code>tx_rend_201X</code> <- Tabela de rendimento escolar para cada ano
+##### <code>limpeza</code> <- Função que sintetiza os comandos necessários para limpar as tabelas de Educação
+##### <code>estados</code> <-Lista de nomes das tabelas dentro da pasta "Desemprego Trimestral"
+##### <code>arquivos</code> <- Lista de tabelas dentro da pasta ""Desemprego Trimestral""
+##### <code>limpeza</code> <- Função que sintetiza os comandos necessários para limpar as tabelas de Desemprego. Além disso, neste caso a função também 
+##### une as tabelas e cria média anual para cada conjunto de 4 trimestres.
+##### <code>desemprego</code> <- Tabela que une os dados sobre desemprego para todos os estados durante os 7 anos em cada faixa etária
+
+### 7.2)
+##### <code>reprovacao</code> <-Tabela que une os dados sobre reprovação para todos os estados durante os 7 anos em cada faixa etária
+##### <code>col_rep</code> <-Coluna previamente sintetizada para ser colocada na tabela de regressão(Reprovação)
+##### <code>evasao</code> <-Tabela que une os dados sobre reprovação para todos os estados durante os 7 anos em cada faixa etária
+##### <code>col_eva</code> <-Coluna previamente sintetizada para ser colocada na tabela de regressão(Evasão)
+##### <code>col_des</code> <-Coluna previamente sintetizada para ser colocada na tabela de regressão(Desemprego)
+
+### 7.3)
+##### <code>regr</code> <-Data Frame final para facilitar a realização da regressão dos dados á nível estadual com a função lm
+##### <code>regressao.ev</code> <-Regressão com variável dependente "Evasão"
+##### <code>regressao.rp</code> <-Regressão com variável dependente "Reprovação"
+##### <code>regr_rj</code> <-Data Frame final para facilitar a realização da regressão dos dados á nível Rio de Janeiro com a função lm
+##### <code>regressao.ev.RJ</code> <-Regressão com variável dependente "Evasão" dos dados do RJ
+##### <code>regressao.rp.RJ</code> <-Regressão com variável dependente "Reprovação" dos dados do RJ
+
+### 7.4)
+
+##### <code>adol.ja.ad</code> <-Tabela para confecção de gráfico com as colunas de desemprego de adolescentes, jovens adultos e adultos.
+##### <code>adol.ev.rp</code> <-Tabela para confecção de gráfico com as colunas de desemprego de adolescentes, evasão e reprovação.
+##### <code>ev.ja.ad</code> <-Tabela para confecção de gráfico com as colunas de desemprego de jovens adultos e adultos e evasão.
+
+### 7.5) 
+
+##### <code>pl.line.rj1</code> <-Tabela para confecção de gráfico com as colunas de desemprego de adolescentes, jovens adultos e adultos para o Rio de Janeiro
+##### <code>pl.line.rj2</code> <-Tabela para confecção de gráfico com as colunas de desemprego de adolescentes, evasão e reprovação para o Rio de Janeiro
+
+### 7.6)
+
+##### <code>rep_geo_br</code> <- Junção das tabelas de reprovação (limpadas e unidas) com a tabela de geometria do pacote geobr
+##### <code>eva_geo_br</code> <- Junção das tabelas de reprovação (limpadas e unidas) com a tabela de geometria do pacote geobr
+##### <code>Brasil_Estados</code> <- Tabela de geometria chamada pelo pacote geobr
